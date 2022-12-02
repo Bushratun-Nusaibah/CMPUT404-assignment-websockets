@@ -47,15 +47,22 @@ world = {};
 //XXX: TODO Make this prettier!
 function drawCircle(context,entity) {
     with(context) {
-        beginPath();                
-        lineWidth = 3;
+        beginPath(); 
+        lineWidth = 30;
+        var gradient = createLinearGradient(0, 0, 0, canvas.height);             
+        gradient.addColorStop(0, 'red');
+        gradient.addColorStop(0.167, 'orange');
+        gradient.addColorStop(0.334, 'yellow');
+        gradient.addColorStop(0.501, 'green');
+        gradient.addColorStop(0.668, 'blue');
+        gradient.addColorStop(0.835, 'purple');
+        gradient.addColorStop(1, 'fuchsia');
         var x = entity["x"];
         var y = entity["y"];
         //moveTo(x,y);
-        fillStyle = entity["colour"];
-        strokeStyle = fillStyle;
-        arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
-        stroke();                                
+        fillStyle =gradient;
+        arc(x, y, (entity["radius"])?entity["radius"]:20, 0, 2.0 * Math.PI, false);  
+        fill();                                    
     }
 }
 
@@ -125,6 +132,10 @@ function addEntity(entity, data) {
     world[entity] = data;
     drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just modified!
+    var update = {};
+    update[entity] = data;
+    socket.send(JSON.stringify(update));
+
 }
 var counter = 0;
 function addEntityWithoutName(data) {
@@ -254,6 +265,9 @@ function wsSetup() {
     socket = new WebSocket(url);
     socket.onopen = function() {
         //XXX: TODO What are you going to do here?
+        ocket.send(JSON.stringify({
+            "action":"get_world"
+        }))
     };
     socket.onerror = function(msg) {
         debug("WebSocket Error:" + msg.data);
@@ -261,7 +275,13 @@ function wsSetup() {
     socket.onmessage = function(msg) {  
         try {
             debug("WebSocket Recv:" + msg.data);
-            //XXX: TODO What are you going to do here?            
+            //XXX: TODO What are you going to do here? 
+            let data = JSON.parse(msg.data);
+            for (let i in data) {
+                world[i] = data[i];
+            }
+            drawNextFrame();
+
         } catch (e) {
             alert("socket on message: " + e);
         }
